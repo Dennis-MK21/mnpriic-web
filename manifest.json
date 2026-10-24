@@ -1,0 +1,17 @@
+{
+  "name": "JuaSize — Solar PV Calculator",
+  "short_name": "JuaSize",
+  "description": "Solar PV system sizing calculator — panels, batteries, inverter and charge controller sizing with cost estimates.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#11161f",
+  "theme_color": "#11161f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

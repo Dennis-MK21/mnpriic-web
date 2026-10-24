@@ -3,24 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>MNPRIIC — Research, Innovation & Invention Club</title>
-
-<!-- ====================================================================
-  SETUP NOTE (read this before publishing):
-  This file needs a Firebase project connected before the shared data
-  will work. Search "firebaseConfig" below and paste in your own keys.
-  Full step-by-step instructions were given alongside this file.
-======================================================================= -->
+<title>JuaSize — Solar PV System Calculator</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#11161f">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
   :root{
-    --bg:#141b26; --card:#1e2a3c; --border:#2c3a4f;
-    --cream:#eee3ce; --cream-dim:#b9ae98;
-    --gold:#c2a15e; --gold-dim:#8a744a;
-    --steel:#7fa0bd; --muted:#7c8798; --danger:#c47b6a;
+    --bg:#11161f; --card:#1b2330; --border:#2a3447;
+    --cream:#f5ecd9; --cream-dim:#c9bfa8;
+    --sun:#f4a93b; --sun-dim:#b97d2a;
+    --sky:#5fa8d3; --muted:#818da0; --danger:#d1796a; --good:#6fb98f;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--cream);font-family:'IBM Plex Sans',sans-serif;}
@@ -28,365 +26,895 @@
   .display{font-family:'Space Grotesk',sans-serif;}
   #app{min-height:100vh;padding-bottom:78px;}
 
-  header{position:relative;overflow:hidden;border-bottom:1px solid var(--border);padding:28px 20px 22px;text-align:center;}
-  header::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(194,161,94,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(194,161,94,.06) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;}
-  .crest{width:62px;height:62px;margin:0 auto 12px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;background:var(--card);position:relative;}
-  .crest svg{width:26px;height:26px;color:var(--cream);}
-  .club-name{font-weight:700;font-size:26px;letter-spacing:1px;}
-  .club-sub{font-size:10.5px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-top:6px;}
-  .club-school{font-size:11px;color:var(--muted);margin-top:3px;}
+  header{position:relative;overflow:hidden;border-bottom:1px solid var(--border);padding:26px 20px 20px;text-align:center;}
+  header::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 50% 0%, rgba(244,169,59,.08), transparent 60%);pointer-events:none;}
+  .crest{width:58px;height:58px;margin:0 auto 10px;border-radius:50%;border:1.5px solid var(--sun);display:flex;align-items:center;justify-content:center;background:var(--card);position:relative;}
+  .crest svg{width:28px;height:28px;color:var(--sun);}
+  .app-name{font-weight:700;font-size:25px;letter-spacing:1px;}
+  .app-sub{font-size:10.5px;letter-spacing:1.5px;color:var(--sun);text-transform:uppercase;margin-top:5px;}
 
-  .content{max-width:480px;margin:0 auto;padding:0 16px;}
+  .content{max-width:520px;margin:0 auto;padding:14px 16px 0;}
   .ribbon{display:flex;align-items:center;gap:10px;margin:22px 0 12px;}
   .ribbon .line{flex:1;height:1px;background:var(--border);}
-  .ribbon span{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);white-space:nowrap;}
+  .ribbon span{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sun);white-space:nowrap;}
 
-  .empty{border:1px dashed var(--border);border-radius:10px;padding:28px 16px;text-align:center;color:var(--muted);font-size:13px;}
-  .spinner-wrap{display:flex;justify-content:center;padding:30px;}
-  .spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  @media (prefers-reduced-motion:reduce){.spinner{animation:none;}}
+  .project-bar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:4px;}
+  .project-bar .name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;}
+  .project-bar .actions{display:flex;gap:8px;}
+  .mini-btn{background:none;border:1px solid var(--border);color:var(--cream-dim);border-radius:6px;padding:5px 9px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer;}
+  .mini-btn.primary{border-color:var(--sun);color:var(--sun);}
 
-  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
-  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-  .card-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;}
-  .card-body{font-size:13px;color:var(--cream-dim);margin-top:6px;line-height:1.5;}
-  .card-meta{font-size:10px;color:var(--muted);margin-top:8px;font-family:'IBM Plex Mono',monospace;}
-  .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+  .appl-row{display:grid;grid-template-columns:1fr 54px 44px 50px 28px;gap:6px;align-items:center;margin-bottom:8px;}
+  .appl-row input{margin-bottom:0;padding:8px 6px;font-size:12.5px;text-align:left;}
+  .appl-row input.num{text-align:center;}
+  .appl-head{display:grid;grid-template-columns:1fr 54px 44px 50px 28px;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
+  .chip{background:var(--bg);border:1px solid var(--border);color:var(--cream-dim);border-radius:20px;padding:5px 11px;font-size:11.5px;cursor:pointer;}
+  .add-row-btn{width:100%;background:none;border:1px dashed var(--border);color:var(--sun);border-radius:8px;padding:9px;font-size:12.5px;cursor:pointer;margin-top:4px;font-family:'IBM Plex Mono',monospace;}
 
-  .projects-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .tag{display:inline-block;font-size:9px;color:var(--bg);background:var(--steel);border-radius:4px;padding:2px 6px;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
-  .proj-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;}
-  .proj-card .icon-btn{position:absolute;top:10px;right:10px;}
-  .proj-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;margin-bottom:4px;}
-  .proj-desc{font-size:12px;color:var(--cream-dim);line-height:1.4;margin-bottom:8px;}
-  .proj-inventor{font-size:10px;color:var(--gold);font-family:'IBM Plex Mono',monospace;}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  label.field-label{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;font-family:'IBM Plex Mono',monospace;}
+  input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--cream);font-family:'IBM Plex Sans',sans-serif;font-size:14px;margin-bottom:10px;outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--sun);}
 
-  .event-row{display:flex;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
-  .date-badge{width:44px;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 0;flex-shrink:0;height:fit-content;}
-  .date-badge .num{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--gold);font-weight:600;}
-  .date-badge .mon{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;}
+  .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .result-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;}
+  .result-card .label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'IBM Plex Mono',monospace;margin-bottom:4px;}
+  .result-card .value{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;color:var(--sun);}
+  .result-card .sub{font-size:11px;color:var(--cream-dim);margin-top:2px;}
 
-  .member-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
-  .member-left{display:flex;align-items:center;gap:10px;}
-  .avatar{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;color:var(--gold);flex-shrink:0;}
-  .member-name{font-weight:600;font-size:13.5px;}
-  .member-role{font-size:10px;color:var(--steel);font-family:'IBM Plex Mono',monospace;}
+  .total-cost{background:linear-gradient(135deg, rgba(244,169,59,.12), rgba(244,169,59,.02));border:1px solid var(--sun-dim);border-radius:10px;padding:16px;text-align:center;margin-top:10px;}
+  .total-cost .label{font-size:10px;color:var(--sun);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;}
+  .total-cost .value{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;}
 
-  .fab{position:fixed;right:18px;bottom:88px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:var(--bg);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;z-index:30;font-size:26px;}
+  .report-btn{width:100%;background:var(--sun);color:var(--bg);border:none;border-radius:8px;padding:13px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;cursor:pointer;margin:16px 0 8px;}
+
+  .proj-list-item{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;}
+  .proj-list-item .pname{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;}
+  .proj-list-item .pmeta{font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px;}
+  .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
+  .empty{border:1px dashed var(--border);border-radius:10px;padding:26px 16px;text-align:center;color:var(--muted);font-size:13px;}
+
   nav.tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:20;}
   nav.tabbar button{flex:1;background:none;border:none;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--muted);}
-  nav.tabbar button.active{color:var(--gold);}
-  nav.tabbar span{font-size:9.5px;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace;}
+  nav.tabbar button.active{color:var(--sun);}
+  nav.tabbar span{font-size:10px;letter-spacing:.5px;font-family:'IBM Plex Mono',monospace;}
   nav.tabbar svg{width:19px;height:19px;}
 
-  .modal-backdrop{position:fixed;inset:0;background:rgba(10,14,20,.72);display:flex;align-items:flex-end;z-index:40;}
-  .modal{width:100%;max-height:85vh;overflow-y:auto;background:var(--card);border-top:1px solid var(--gold);border-radius:16px 16px 0 0;padding:18px 18px 28px;}
-  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(8,11,16,.78);display:flex;align-items:flex-end;z-index:40;}
+  .modal{width:100%;max-height:88vh;overflow-y:auto;background:var(--card);border-top:1px solid var(--sun);border-radius:16px 16px 0 0;padding:18px 18px 28px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .modal-head span{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;}
-  label.field-label{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;font-family:'IBM Plex Mono',monospace;}
-  input,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--cream);font-family:'IBM Plex Sans',sans-serif;font-size:14px;margin-bottom:12px;outline:none;}
-  input:focus,textarea:focus{border-color:var(--gold);}
-  textarea{min-height:80px;resize:vertical;}
-  .submit-btn{width:100%;background:var(--gold);color:var(--bg);border:none;border-radius:8px;padding:12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;cursor:pointer;}
-  .banner{margin:14px 16px 0;padding:10px 12px;border:1px solid var(--danger);border-radius:8px;color:var(--danger);font-size:12px;}
+  .report-text{white-space:pre-wrap;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.6;color:var(--cream-dim);margin-bottom:14px;}
+  .modal-actions{display:flex;gap:8px;}
+  .modal-actions button{flex:1;}
+  .submit-btn{background:var(--sun);color:var(--bg);border:none;border-radius:8px;padding:12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;}
+  .ghost-btn{background:none;color:var(--cream);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;}
+  .note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;}
+
+  /* ---- safety checks ---- */
+  .check-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .check-row:last-child{border-bottom:none;}
+  .check-badge{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px;}
+  .check-badge.pass{background:rgba(111,185,143,.15);color:var(--good);}
+  .check-badge.warn{background:rgba(209,121,106,.15);color:var(--danger);}
+  .check-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;}
+  .check-detail{font-size:12px;color:var(--cream-dim);margin-top:3px;line-height:1.5;}
+
+  /* ---- quote tab ---- */
+  .li-row{display:grid;grid-template-columns:1fr 40px 70px 34px;gap:6px;align-items:center;margin-bottom:8px;}
+  .li-row input{margin-bottom:0;padding:8px 6px;font-size:12.5px;}
+  .li-head{display:grid;grid-template-columns:1fr 40px 70px 34px;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+  .totals-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;color:var(--cream-dim);}
+  .totals-row.grand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--sun);border-top:1px solid var(--border);margin-top:4px;padding-top:10px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;}
+  .toggle-row .tlabel{font-size:13px;}
+  .switch{position:relative;width:40px;height:22px;background:var(--border);border-radius:20px;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--sun);}
+  .switch .dot{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--cream);transition:left .15s;}
+  .switch.on .dot{left:20px;}
+  .link-btn{background:none;border:none;color:var(--sky);font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;padding:0;text-decoration:underline;}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <div class="crest">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.5.5.8 1 .8 1.7V16h6.4v-.8c0-.7.3-1.2.8-1.7A6 6 0 0 0 12 3Z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
     </div>
-    <div class="club-name display">MNPRIIC</div>
-    <div class="club-sub mono">Research · Innovation &amp; Invention Club</div>
-    <div class="club-school">Mitunguu National Polytechnic</div>
+    <div class="app-name display">JuaSize</div>
+    <div class="app-sub mono">Solar PV System Calculator</div>
   </header>
 
-  <div id="config-banner"></div>
   <div class="content" id="content"></div>
-  <button class="fab" id="fab" aria-label="Add">+</button>
 
   <nav class="tabbar" id="tabbar">
-    <button data-tab="home" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg><span class="mono">Home</span></button>
-    <button data-tab="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.5.5.8 1 .8 1.7V16h6.4v-.8c0-.7.3-1.2.8-1.7A6 6 0 0 0 12 3Z"/></svg><span class="mono">Projects</span></button>
-    <button data-tab="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span class="mono">Events</span></button>
-    <button data-tab="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c.7-3.5 3.3-5.5 6.5-5.5s5.8 2 6.5 5.5"/><circle cx="17" cy="8" r="2.6"/><path d="M15.8 14.8c2.5.3 4.3 2.1 4.9 5.2"/></svg><span class="mono">Members</span></button>
+    <button data-tab="calc" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0"/></svg>
+      <span class="mono">Calculator</span>
+    </button>
+    <button data-tab="quote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z"/><path d="M14 2v5h5M8 13h8M8 17h5"/></svg>
+      <span class="mono">Quote</span>
+    </button>
+    <button data-tab="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+      <span class="mono">Projects</span>
+    </button>
   </nav>
 </div>
 
 <div id="modal-root"></div>
 
-<!-- Firebase SDK (compat build — no bundler needed) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script>
-/* =====================================================================
-   1) PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console → Project
-      settings → General → "Your apps" → SDK setup and configuration).
-   ===================================================================== */
-const firebaseConfig = {
-  apiKey: "AIzaSyAtjiraEL4rJGyaYGL58bs_N5m898GAOoM",
-  authDomain: "riic-827e8.firebaseapp.com",
-  projectId: "riic-827e8",
-  storageBucket: "riic-827e8.firebasestorage.app",
-  messagingSenderId: "172520606590",
-  appId: "1:172520606590:web:aa8b20d7f5d10a6ab6412f"
+/* ============================= STORAGE (per-device, no backend) ============================= */
+const STORAGE_KEY = "juasize:projects";
+const PROFILE_KEY = "juasize:profile";
+function loadProjects(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+  catch(e){ return []; }
+}
+function saveProjects(list){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch(e){ console.error(e); }
+}
+function loadProfile(){
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "null") || { businessName: "", phone: "", email: "", location: "" }; }
+  catch(e){ return { businessName: "", phone: "", email: "", location: "" }; }
+}
+function saveProfile(p){
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e){ console.error(e); }
+}
+
+/* ============================= DEFAULT STATE ============================= */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function defaultAppliances(){
+  return [
+    { id: uid(), name: "LED bulb", watts: 10, qty: 4, hours: 5 },
+    { id: uid(), name: "TV", watts: 80, qty: 1, hours: 4 },
+    { id: uid(), name: "Phone charger", watts: 10, qty: 2, hours: 3 },
+  ];
+}
+function defaultSystem(){
+  return {
+    systemVoltage: 24,
+    batteryType: "lithium",
+    batteryVoltage: 12,
+    batteryAh: 100,
+    dod: 80,
+    autonomyDays: 1,
+    sunHours: 5,
+    derate: 20,
+    diversity: 80,
+    headroom: 25,
+    controllerType: "mppt",
+    panelWatt: 400,
+  };
+}
+function defaultCost(){
+  return { pricePerPanel: 9000, pricePerBattery: 18000, inverterPrice: 15000, controllerPrice: 6000, installPct: 15 };
+}
+function defaultQuote(){
+  return {
+    customerName: "", customerLocation: "", customerPhone: "",
+    lineItems: [], seeded: false,
+    labourCost: 0, discount: 0, vatEnabled: false,
+  };
+}
+
+let state = {
+  tab: "calc",
+  currentProjectId: null,
+  currentProjectName: "Untitled project",
+  appliances: defaultAppliances(),
+  system: defaultSystem(),
+  cost: defaultCost(),
+  quote: defaultQuote(),
 };
 
-let db = null;
-let firebaseReady = false;
-try {
-  if (!firebaseConfig.apiKey.startsWith("PASTE_")) {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    firebaseReady = true;
-  }
-} catch (e) {
-  console.error("Firebase init failed", e);
+const MOTOR_KEYWORDS = ["pump","fridge","freezer","compressor","motor","welder","grinder","drill","saw"];
+
+/* ============================= CALCULATIONS ============================= */
+function calc(){
+  const s = state.system;
+  const applianceTotalWatts = state.appliances.reduce((a,x) => a + (x.watts * x.qty), 0);
+  const dailyWh = state.appliances.reduce((a,x) => a + (x.watts * x.qty * x.hours), 0);
+  const motorWatts = state.appliances.reduce((a,x) => {
+    const isMotor = MOTOR_KEYWORDS.some(k => (x.name||"").toLowerCase().includes(k));
+    return a + (isMotor ? x.watts * x.qty : 0);
+  }, 0);
+
+  const diversity = s.diversity / 100;
+  const derate = s.derate / 100;
+  const dod = s.dod / 100;
+  const headroom = s.headroom / 100;
+
+  const adjustedDailyWh = (dailyWh * diversity) / (1 - derate);
+  const pvArrayWp = adjustedDailyWh / s.sunHours;
+  const panelCount = Math.max(1, Math.ceil(pvArrayWp / s.panelWatt));
+  const actualArrayWp = panelCount * s.panelWatt;
+
+  const requiredBatteryWh = (adjustedDailyWh * s.autonomyDays) / dod;
+  const bankAh = requiredBatteryWh / s.systemVoltage;
+  const seriesCount = Math.max(1, Math.round(s.systemVoltage / s.batteryVoltage));
+  const stringsNeeded = Math.max(1, Math.ceil(bankAh / s.batteryAh));
+  const totalBatteries = seriesCount * stringsNeeded;
+  const actualBankAh = stringsNeeded * s.batteryAh;
+
+  const inverterRawVA = (applianceTotalWatts * diversity * (1 + headroom)) / 0.8;
+  const standardInverterSizes = [500,1000,1500,2000,2500,3000,4000,5000,6000,8000,10000];
+  const inverterVA = standardInverterSizes.find(v => v >= inverterRawVA) || Math.ceil(inverterRawVA/1000)*1000;
+
+  const ccRawAmps = (actualArrayWp * 1.25) / s.systemVoltage;
+  const standardCCSizes = [10,20,30,40,50,60,80,100];
+  const ccAmps = standardCCSizes.find(v => v >= ccRawAmps) || Math.ceil(ccRawAmps/10)*10;
+
+  const c = state.cost;
+  const panelsCost = panelCount * c.pricePerPanel;
+  const batteriesCost = totalBatteries * c.pricePerBattery;
+  const subtotal = panelsCost + batteriesCost + c.inverterPrice + c.controllerPrice;
+  const installCost = subtotal * (c.installPct / 100);
+  const totalCost = subtotal + installCost;
+
+  // ---- safety checks ----
+  const voltageMatchOk = (s.systemVoltage % s.batteryVoltage === 0);
+  const usableBatteryWh = actualBankAh * s.systemVoltage * dod;
+  const backupDaysAchieved = adjustedDailyWh > 0 ? usableBatteryWh / adjustedDailyWh : 0;
+  const backupOk = backupDaysAchieved >= s.autonomyDays - 0.05;
+
+  const nonMotorWatts = applianceTotalWatts - motorWatts;
+  const surgeRawVA = ((nonMotorWatts * diversity) + (motorWatts * 3)) / 0.8;
+  const recommendedSurgeVA = standardInverterSizes.find(v => v >= surgeRawVA) || Math.ceil(surgeRawVA/1000)*1000;
+  const surgeOk = motorWatts === 0 || inverterVA >= recommendedSurgeVA;
+
+  const ccHeadroomOk = ccAmps >= ccRawAmps;
+
+  return {
+    applianceTotalWatts, dailyWh, adjustedDailyWh, motorWatts,
+    pvArrayWp: actualArrayWp, panelCount,
+    bankAh: actualBankAh, totalBatteries, seriesCount, stringsNeeded,
+    inverterVA, ccAmps,
+    panelsCost, batteriesCost, subtotal, installCost, totalCost,
+    voltageMatchOk, backupDaysAchieved, backupOk,
+    recommendedSurgeVA, surgeOk, ccHeadroomOk,
+  };
 }
 
-if (!firebaseReady) {
-  document.getElementById("config-banner").innerHTML =
-    '<div class="banner">Firebase isn\'t connected yet — paste your config in index.html (see setup guide) for shared data to work.</div>';
+function fmt(n){ return Math.round(n).toLocaleString(); }
+
+/* ============================= RENDER: CALCULATOR TAB ============================= */
+const QUICK_ADD = [
+  {name:"LED bulb", watts:10}, {name:"Fridge", watts:150}, {name:"TV", watts:80},
+  {name:"Laptop", watts:65}, {name:"Fan", watts:50}, {name:"Water pump", watts:750},
+  {name:"Iron box", watts:1000}, {name:"Router", watts:10},
+];
+
+function checkRow(ok, title, detail){
+  return `<div class="check-row">
+    <div class="check-badge ${ok ? 'pass' : 'warn'}">${ok ? '✓' : '!'}</div>
+    <div><div class="check-title">${esc(title)}</div><div class="check-detail">${detail}</div></div>
+  </div>`;
 }
 
-/* ---------------------- helpers ---------------------- */
-const state = { tab: "home", data: { announcements: [], projects: [], events: [], members: [] }, loading: { announcements: true, projects: true, events: true, members: true } };
-const contentEl = document.getElementById("content");
-const modalRoot = document.getElementById("modal-root");
-
-function esc(str){
-  const d = document.createElement("div");
-  d.innerText = str == null ? "" : str;
-  return d.innerHTML;
-}
-
-function listen(collection){
-  if (!db) { state.loading[collection] = false; render(); return; }
-  db.collection(collection).orderBy("createdAt", "desc").onSnapshot(
-    (snap) => {
-      state.data[collection] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      state.loading[collection] = false;
-      render();
-    },
-    (err) => {
-      console.error(err);
-      state.loading[collection] = false;
-      render();
-    }
+function renderSafetyChecks(r){
+  const s = state.system;
+  let html = "";
+  html += checkRow(r.voltageMatchOk,
+    "Battery / system voltage match",
+    r.voltageMatchOk
+      ? `${r.seriesCount} × ${s.batteryVoltage}V batteries in series = ${s.systemVoltage}V. Matches your system voltage.`
+      : `${s.batteryVoltage}V batteries don't divide evenly into ${s.systemVoltage}V. Pick a battery voltage that divides evenly (e.g. 12V batteries for a 24V or 48V system).`
   );
+  html += checkRow(r.backupOk,
+    "Battery backup time",
+    r.backupOk
+      ? `Battery bank gives ~${r.backupDaysAchieved.toFixed(1)} days backup, meeting your ${s.autonomyDays}-day target.`
+      : `Battery bank only gives ~${r.backupDaysAchieved.toFixed(1)} days backup — short of your ${s.autonomyDays}-day target. Increase battery Ah or count.`
+  );
+  html += checkRow(r.surgeOk,
+    "Inverter starting surge (motor loads)",
+    r.motorWatts === 0
+      ? `No motor-type loads detected (pumps, fridges, compressors) — standard sizing applies.`
+      : r.surgeOk
+        ? `${fmt(r.motorWatts)}W of motor loads detected. ${fmt(r.inverterVA)}VA inverter covers the ~3× starting surge.`
+        : `${fmt(r.motorWatts)}W of motor loads detected (pumps/fridges start at ~3× their running watts). Recommend at least ${fmt(r.recommendedSurgeVA)}VA, not ${fmt(r.inverterVA)}VA.`
+  );
+  html += checkRow(r.ccHeadroomOk,
+    "Charge controller sizing",
+    `${fmt(r.ccAmps)}A ${s.controllerType.toUpperCase()} controller covers the ${fmt(r.pvArrayWp)}Wp array with a 25% safety margin.`
+  );
+  html += `<div class="note">These are engineering estimates based on standard sizing practice — always verify panel Voc/Isc against your charge controller's input rating sheet before final purchase.</div>`;
+  return html;
 }
-["announcements","projects","events","members"].forEach(listen);
 
-function addDoc(collection, fields){
-  if (!db) { alert("Connect Firebase first — see setup guide."); return; }
-  db.collection(collection).add({ ...fields, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-}
-function removeDoc(collection, id){
-  if (!db) return;
-  db.collection(collection).doc(id).delete();
-}
+function renderCalc(){
+  const r = calc();
+  const el = document.getElementById("content");
+  el.innerHTML = `
+    <div class="project-bar">
+      <span class="name">${esc(state.currentProjectName)}</span>
+      <div class="actions">
+        <button class="mini-btn" id="btn-new">New</button>
+        <button class="mini-btn primary" id="btn-save">Save</button>
+      </div>
+    </div>
 
-/* ---------------------- rendering ---------------------- */
-function spinnerOrEmpty(loading, items, emptyText){
-  if (loading) return '<div class="spinner-wrap"><div class="spinner"></div></div>';
-  if (items.length === 0) return `<div class="empty">${esc(emptyText)}</div>`;
-  return null;
-}
-
-function renderHome(){
-  const { announcements } = state.data;
-  const skip = spinnerOrEmpty(state.loading.announcements, announcements, "No announcements yet. Post the first update for the club.");
-  let body = skip !== null ? skip : announcements.map(a => `
+    <div class="ribbon"><div class="line"></div><span>Appliance Loads</span><div class="line"></div></div>
     <div class="card">
-      <div class="card-top">
-        <div class="card-title">${esc(a.title)}</div>
-        <button class="icon-btn" onclick="removeDoc('announcements','${a.id}')">✕</button>
+      <div class="appl-head"><span>Appliance</span><span>Watts</span><span>Qty</span><span>Hrs/day</span><span></span></div>
+      <div id="appl-rows"></div>
+      <div class="chips" id="quick-add"></div>
+      <button class="add-row-btn" id="btn-add-row">+ Add appliance</button>
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>System Parameters</span><div class="line"></div></div>
+    <div class="card">
+      <div class="field-grid">
+        <div><label class="field-label">System voltage</label>
+          <select id="f-systemVoltage"><option value="12">12V</option><option value="24">24V</option><option value="48">48V</option></select></div>
+        <div><label class="field-label">Battery type</label>
+          <select id="f-batteryType"><option value="lithium">Lithium (LiFePO4)</option><option value="leadacid">Lead-acid</option></select></div>
+        <div><label class="field-label">Battery voltage</label><input id="f-batteryVoltage" type="number" value="${state.system.batteryVoltage}"></div>
+        <div><label class="field-label">Battery capacity (Ah)</label><input id="f-batteryAh" type="number" value="${state.system.batteryAh}"></div>
+        <div><label class="field-label">Depth of discharge (%)</label><input id="f-dod" type="number" value="${state.system.dod}"></div>
+        <div><label class="field-label">Autonomy (days)</label><input id="f-autonomyDays" type="number" value="${state.system.autonomyDays}"></div>
+        <div><label class="field-label">Peak sun hours</label><input id="f-sunHours" type="number" value="${state.system.sunHours}"></div>
+        <div><label class="field-label">Panel wattage (Wp)</label><input id="f-panelWatt" type="number" value="${state.system.panelWatt}"></div>
+        <div><label class="field-label">System losses / derate (%)</label><input id="f-derate" type="number" value="${state.system.derate}"></div>
+        <div><label class="field-label">Load diversity (%)</label><input id="f-diversity" type="number" value="${state.system.diversity}"></div>
+        <div><label class="field-label">Inverter headroom (%)</label><input id="f-headroom" type="number" value="${state.system.headroom}"></div>
+        <div><label class="field-label">Controller type</label>
+          <select id="f-controllerType"><option value="mppt">MPPT</option><option value="pwm">PWM</option></select></div>
       </div>
-      <div class="card-body">${esc(a.body)}</div>
-      <div class="card-meta">— ${esc(a.author || "Club Board")}</div>
-    </div>`).join("");
-  contentEl.innerHTML = `<div class="ribbon"><div class="line"></div><span>Announcements</span><div class="line"></div></div>${body}`;
+      <div class="note">Defaults assume Kenyan grid conditions (~5 peak sun hours). Adjust for your specific site.</div>
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Sizing Results</span><div class="line"></div></div>
+    <div class="results-grid">
+      <div class="result-card"><div class="label">Daily energy need</div><div class="value">${fmt(r.dailyWh)} Wh</div><div class="sub">before losses &amp; diversity</div></div>
+      <div class="result-card"><div class="label">PV array size</div><div class="value">${fmt(r.pvArrayWp)} Wp</div><div class="sub">${r.panelCount} × ${state.system.panelWatt}W panels</div></div>
+      <div class="result-card"><div class="label">Battery bank</div><div class="value">${fmt(r.bankAh)} Ah</div><div class="sub">${r.totalBatteries} batteries (${r.seriesCount}S ${r.stringsNeeded}P)</div></div>
+      <div class="result-card"><div class="label">Inverter size</div><div class="value">${fmt(r.inverterVA)} VA</div><div class="sub">incl. ${state.system.headroom}% headroom</div></div>
+      <div class="result-card"><div class="label">Charge controller</div><div class="value">${fmt(r.ccAmps)} A</div><div class="sub">${state.system.controllerType.toUpperCase()}</div></div>
+      <div class="result-card"><div class="label">Connected load</div><div class="value">${fmt(r.applianceTotalWatts)} W</div><div class="sub">total if all on at once</div></div>
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Safety &amp; Accuracy Checks</span><div class="line"></div></div>
+    <div class="card" id="safety-checks">${renderSafetyChecks(r)}</div>
+
+    <div class="ribbon"><div class="line"></div><span>Cost Estimate (KES)</span><div class="line"></div></div>
+    <div class="card">
+      <div class="field-grid">
+        <div><label class="field-label">Price per panel</label><input id="c-pricePerPanel" type="number" value="${state.cost.pricePerPanel}"></div>
+        <div><label class="field-label">Price per battery</label><input id="c-pricePerBattery" type="number" value="${state.cost.pricePerBattery}"></div>
+        <div><label class="field-label">Inverter price</label><input id="c-inverterPrice" type="number" value="${state.cost.inverterPrice}"></div>
+        <div><label class="field-label">Controller price</label><input id="c-controllerPrice" type="number" value="${state.cost.controllerPrice}"></div>
+      </div>
+      <label class="field-label">Installation / misc (%)</label>
+      <input id="c-installPct" type="number" value="${state.cost.installPct}">
+      <div class="total-cost">
+        <div class="label">Estimated total system cost</div>
+        <div class="value">KES ${fmt(r.totalCost)}</div>
+      </div>
+    </div>
+
+    <button class="report-btn" id="btn-report">Generate Shareable Report</button>
+    <button class="report-btn" id="btn-to-quote" style="background:none;border:1px solid var(--sun);color:var(--sun);">Build Client Quotation →</button>
+  `;
+
+  renderApplianceRows();
+  QUICK_ADD.forEach(q => {
+    const chip = document.createElement("button");
+    chip.className = "chip"; chip.textContent = "+ " + q.name;
+    chip.onclick = () => { state.appliances.push({ id: uid(), name: q.name, watts: q.watts, qty: 1, hours: 2 }); renderCalc(); };
+    document.getElementById("quick-add").appendChild(chip);
+  });
+
+  const bindNum = (id, obj, key, isSelect) => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.value = obj[key];
+    node.addEventListener("input", () => { obj[key] = isSelect ? node.value : parseFloat(node.value) || 0; renderResultsOnly(); });
+  };
+  bindNum("f-systemVoltage", state.system, "systemVoltage", false);
+  document.getElementById("f-systemVoltage").value = state.system.systemVoltage;
+  document.getElementById("f-batteryType").value = state.system.batteryType;
+  document.getElementById("f-batteryType").addEventListener("change", (e) => {
+    state.system.batteryType = e.target.value;
+    state.system.dod = e.target.value === "lithium" ? 80 : 50;
+    renderCalc();
+  });
+  bindNum("f-batteryVoltage", state.system, "batteryVoltage");
+  bindNum("f-batteryAh", state.system, "batteryAh");
+  bindNum("f-dod", state.system, "dod");
+  bindNum("f-autonomyDays", state.system, "autonomyDays");
+  bindNum("f-sunHours", state.system, "sunHours");
+  bindNum("f-panelWatt", state.system, "panelWatt");
+  bindNum("f-derate", state.system, "derate");
+  bindNum("f-diversity", state.system, "diversity");
+  bindNum("f-headroom", state.system, "headroom");
+  document.getElementById("f-controllerType").value = state.system.controllerType;
+  document.getElementById("f-controllerType").addEventListener("change", (e) => { state.system.controllerType = e.target.value; renderResultsOnly(); });
+
+  bindNum("c-pricePerPanel", state.cost, "pricePerPanel");
+  bindNum("c-pricePerBattery", state.cost, "pricePerBattery");
+  bindNum("c-inverterPrice", state.cost, "inverterPrice");
+  bindNum("c-controllerPrice", state.cost, "controllerPrice");
+  bindNum("c-installPct", state.cost, "installPct");
+
+  document.getElementById("btn-add-row").onclick = () => { state.appliances.push({ id: uid(), name: "", watts: 0, qty: 1, hours: 1 }); renderCalc(); };
+  document.getElementById("btn-new").onclick = () => {
+    if (!confirm("Start a new blank project? Unsaved changes will be lost.")) return;
+    state = { tab: "calc", currentProjectId: null, currentProjectName: "Untitled project", appliances: defaultAppliances(), system: defaultSystem(), cost: defaultCost(), quote: defaultQuote() };
+    renderCalc();
+  };
+  document.getElementById("btn-save").onclick = () => openSaveModal();
+  document.getElementById("btn-report").onclick = () => openReportModal(r);
+  document.getElementById("btn-to-quote").onclick = () => { state.tab = "quote"; renderAll(); };
 }
 
-function renderProjects(){
-  const { projects } = state.data;
-  const skip = spinnerOrEmpty(state.loading.projects, projects, "No projects logged yet. Be the first to add an invention.");
-  let body;
-  if (skip !== null) body = skip;
-  else {
-    body = `<div class="projects-grid">` + projects.map(p => `
-      <div class="proj-card">
-        <span class="tag">${esc((p.category || "GENERAL").toUpperCase())}</span>
-        <button class="icon-btn" onclick="removeDoc('projects','${p.id}')">✕</button>
-        <div class="proj-title">${esc(p.title)}</div>
-        <div class="proj-desc">${esc(p.description)}</div>
-        <div class="proj-inventor">${esc(p.inventor)}</div>
-      </div>`).join("") + `</div>`;
+function renderApplianceRows(){
+  const wrap = document.getElementById("appl-rows");
+  wrap.innerHTML = "";
+  state.appliances.forEach(a => {
+    const row = document.createElement("div");
+    row.className = "appl-row";
+    row.innerHTML = `
+      <input data-f="name" value="${esc(a.name)}" placeholder="Appliance name">
+      <input data-f="watts" class="num" type="number" value="${a.watts}">
+      <input data-f="qty" class="num" type="number" value="${a.qty}">
+      <input data-f="hours" class="num" type="number" value="${a.hours}">
+      <button class="icon-btn" data-del="1">✕</button>
+    `;
+    row.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const f = inp.dataset.f;
+        a[f] = f === "name" ? inp.value : (parseFloat(inp.value) || 0);
+        renderResultsOnly();
+      });
+    });
+    row.querySelector("[data-del]").addEventListener("click", () => {
+      state.appliances = state.appliances.filter(x => x.id !== a.id);
+      renderCalc();
+    });
+    wrap.appendChild(row);
+  });
+}
+
+function renderResultsOnly(){
+  const r = calc();
+  const grid = document.querySelector(".results-grid");
+  if (grid) {
+    grid.innerHTML = `
+      <div class="result-card"><div class="label">Daily energy need</div><div class="value">${fmt(r.dailyWh)} Wh</div><div class="sub">before losses &amp; diversity</div></div>
+      <div class="result-card"><div class="label">PV array size</div><div class="value">${fmt(r.pvArrayWp)} Wp</div><div class="sub">${r.panelCount} × ${state.system.panelWatt}W panels</div></div>
+      <div class="result-card"><div class="label">Battery bank</div><div class="value">${fmt(r.bankAh)} Ah</div><div class="sub">${r.totalBatteries} batteries (${r.seriesCount}S ${r.stringsNeeded}P)</div></div>
+      <div class="result-card"><div class="label">Inverter size</div><div class="value">${fmt(r.inverterVA)} VA</div><div class="sub">incl. ${state.system.headroom}% headroom</div></div>
+      <div class="result-card"><div class="label">Charge controller</div><div class="value">${fmt(r.ccAmps)} A</div><div class="sub">${state.system.controllerType.toUpperCase()}</div></div>
+      <div class="result-card"><div class="label">Connected load</div><div class="value">${fmt(r.applianceTotalWatts)} W</div><div class="sub">total if all on at once</div></div>
+    `;
   }
-  contentEl.innerHTML = `<div class="ribbon"><div class="line"></div><span>Project Showcase</span><div class="line"></div></div>${body}`;
+  const safety = document.getElementById("safety-checks");
+  if (safety) safety.innerHTML = renderSafetyChecks(r);
+  const totalVal = document.querySelector(".total-cost .value");
+  if (totalVal) totalVal.textContent = `KES ${fmt(r.totalCost)}`;
+  const btnReport = document.getElementById("btn-report");
+  if (btnReport) btnReport.onclick = () => openReportModal(calc());
 }
 
-function renderEvents(){
-  const events = [...state.data.events].sort((a,b) => new Date(a.date) - new Date(b.date));
-  const skip = spinnerOrEmpty(state.loading.events, events, "No events scheduled. Add the next meeting or competition.");
-  let body = skip !== null ? skip : events.map(e => {
-    const d = new Date(e.date);
-    const valid = !isNaN(d.getTime());
-    return `
-    <div class="event-row">
-      <div class="date-badge">
-        <div class="num">${valid ? d.getDate() : "--"}</div>
-        <div class="mon">${valid ? d.toLocaleString('default',{month:'short'}) : ""}</div>
+/* ============================= RENDER: QUOTE TAB ============================= */
+function seedQuoteLineItems(r){
+  const s = state.system;
+  state.quote.lineItems = [
+    { id: uid(), desc: `${s.panelWatt}W Solar Panel`, qty: r.panelCount, unitPrice: state.cost.pricePerPanel },
+    { id: uid(), desc: `${s.batteryAh}Ah ${s.batteryType === "lithium" ? "Lithium" : "Lead-acid"} Battery`, qty: r.totalBatteries, unitPrice: state.cost.pricePerBattery },
+    { id: uid(), desc: `${fmt(r.inverterVA)}VA Inverter`, qty: 1, unitPrice: state.cost.inverterPrice },
+    { id: uid(), desc: `${fmt(r.ccAmps)}A ${s.controllerType.toUpperCase()} Charge Controller`, qty: 1, unitPrice: state.cost.controllerPrice },
+  ];
+  state.quote.seeded = true;
+}
+
+function quoteTotals(){
+  const itemsSubtotal = state.quote.lineItems.reduce((a,x) => a + (x.qty * x.unitPrice), 0);
+  const withLabour = itemsSubtotal + (state.quote.labourCost || 0);
+  const afterDiscount = Math.max(0, withLabour - (state.quote.discount || 0));
+  const vatAmount = state.quote.vatEnabled ? afterDiscount * 0.16 : 0;
+  const grandTotal = afterDiscount + vatAmount;
+  return { itemsSubtotal, withLabour, afterDiscount, vatAmount, grandTotal };
+}
+
+function renderQuote(){
+  const r = calc();
+  if (!state.quote.seeded || state.quote.lineItems.length === 0) seedQuoteLineItems(r);
+  const profile = loadProfile();
+  const t = quoteTotals();
+  const el = document.getElementById("content");
+
+  el.innerHTML = `
+    <div class="project-bar">
+      <span class="name">Quotation builder</span>
+      <button class="link-btn" id="btn-edit-profile">Edit business info</button>
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Customer Details</span><div class="line"></div></div>
+    <div class="card">
+      <label class="field-label">Customer name</label>
+      <input id="q-customerName" value="${esc(state.quote.customerName)}" placeholder="e.g. James Mwangi">
+      <label class="field-label">Site / location</label>
+      <input id="q-customerLocation" value="${esc(state.quote.customerLocation)}" placeholder="e.g. Mitunguu, Meru">
+      <label class="field-label">Phone</label>
+      <input id="q-customerPhone" value="${esc(state.quote.customerPhone)}" placeholder="07XX XXX XXX">
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Equipment &amp; Line Items</span><div class="line"></div></div>
+    <div class="card">
+      <div class="li-head"><span>Description</span><span>Qty</span><span>Unit (KES)</span><span></span></div>
+      <div id="li-rows"></div>
+      <button class="add-row-btn" id="btn-add-li">+ Add line item (cabling, mounting, etc.)</button>
+      <button class="add-row-btn" id="btn-reseed-li" style="color:var(--muted);border-color:var(--border);">↻ Re-sync from calculator</button>
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Labour &amp; Adjustments</span><div class="line"></div></div>
+    <div class="card">
+      <label class="field-label">Labour / installation cost (KES)</label>
+      <input id="q-labour" type="number" value="${state.quote.labourCost}">
+      <label class="field-label">Discount (KES)</label>
+      <input id="q-discount" type="number" value="${state.quote.discount}">
+      <div class="toggle-row">
+        <span class="tlabel">Add 16% VAT</span>
+        <div class="switch ${state.quote.vatEnabled ? 'on' : ''}" id="q-vat-toggle"><div class="dot"></div></div>
       </div>
-      <div style="flex:1">
-        <div class="card-top">
-          <div class="card-title" style="font-size:14px">${esc(e.title)}</div>
-          <button class="icon-btn" onclick="removeDoc('events','${e.id}')">✕</button>
-        </div>
-        <div class="card-body" style="font-size:12px">${esc(e.description)}</div>
-        ${e.location ? `<div class="card-meta" style="color:var(--steel)">@ ${esc(e.location)}</div>` : ""}
+    </div>
+
+    <div class="ribbon"><div class="line"></div><span>Quotation Total</span><div class="line"></div></div>
+    <div class="card" id="quote-totals-card"></div>
+
+    <button class="report-btn" id="btn-gen-pdf">Download PDF Quotation</button>
+    <button class="report-btn" id="btn-share-quote" style="background:none;border:1px solid var(--sun);color:var(--sun);">Share via WhatsApp</button>
+  `;
+
+  renderLineItems();
+  renderQuoteTotalsCard();
+
+  document.getElementById("q-customerName").addEventListener("input", (e) => { state.quote.customerName = e.target.value; });
+  document.getElementById("q-customerLocation").addEventListener("input", (e) => { state.quote.customerLocation = e.target.value; });
+  document.getElementById("q-customerPhone").addEventListener("input", (e) => { state.quote.customerPhone = e.target.value; });
+  document.getElementById("q-labour").addEventListener("input", (e) => { state.quote.labourCost = parseFloat(e.target.value) || 0; renderQuoteTotalsCard(); });
+  document.getElementById("q-discount").addEventListener("input", (e) => { state.quote.discount = parseFloat(e.target.value) || 0; renderQuoteTotalsCard(); });
+  document.getElementById("q-vat-toggle").addEventListener("click", () => { state.quote.vatEnabled = !state.quote.vatEnabled; renderQuote(); });
+
+  document.getElementById("btn-add-li").onclick = () => {
+    state.quote.lineItems.push({ id: uid(), desc: "", qty: 1, unitPrice: 0 });
+    renderLineItems(); renderQuoteTotalsCard();
+  };
+  document.getElementById("btn-reseed-li").onclick = () => {
+    if (!confirm("Replace current line items with the calculator's latest sizing?")) return;
+    seedQuoteLineItems(calc());
+    renderLineItems(); renderQuoteTotalsCard();
+  };
+  document.getElementById("btn-edit-profile").onclick = () => openProfileModal();
+  document.getElementById("btn-gen-pdf").onclick = () => generateQuotePDF();
+  document.getElementById("btn-share-quote").onclick = () => shareQuoteText();
+}
+
+function renderLineItems(){
+  const wrap = document.getElementById("li-rows");
+  wrap.innerHTML = "";
+  state.quote.lineItems.forEach(li => {
+    const row = document.createElement("div");
+    row.className = "li-row";
+    row.innerHTML = `
+      <input data-f="desc" value="${esc(li.desc)}" placeholder="Item description">
+      <input data-f="qty" type="number" value="${li.qty}">
+      <input data-f="unitPrice" type="number" value="${li.unitPrice}">
+      <button class="icon-btn" data-del>✕</button>
+    `;
+    row.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const f = inp.dataset.f;
+        li[f] = f === "desc" ? inp.value : (parseFloat(inp.value) || 0);
+        renderQuoteTotalsCard();
+      });
+    });
+    row.querySelector("[data-del]").addEventListener("click", () => {
+      state.quote.lineItems = state.quote.lineItems.filter(x => x.id !== li.id);
+      renderLineItems(); renderQuoteTotalsCard();
+    });
+    wrap.appendChild(row);
+  });
+}
+
+function renderQuoteTotalsCard(){
+  const card = document.getElementById("quote-totals-card");
+  if (!card) return;
+  const t = quoteTotals();
+  card.innerHTML = `
+    <div class="totals-row"><span>Equipment subtotal</span><span>KES ${fmt(t.itemsSubtotal)}</span></div>
+    <div class="totals-row"><span>Labour / installation</span><span>KES ${fmt(state.quote.labourCost || 0)}</span></div>
+    ${state.quote.discount > 0 ? `<div class="totals-row"><span>Discount</span><span>- KES ${fmt(state.quote.discount)}</span></div>` : ""}
+    ${state.quote.vatEnabled ? `<div class="totals-row"><span>VAT (16%)</span><span>KES ${fmt(t.vatAmount)}</span></div>` : ""}
+    <div class="totals-row grand"><span>Grand Total</span><span>KES ${fmt(t.grandTotal)}</span></div>
+  `;
+}
+
+function openProfileModal(){
+  const p = loadProfile();
+  const root = document.getElementById("modal-root");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="backdrop">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head"><span>Your business info</span><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <label class="field-label">Business / your name</label>
+        <input id="p-name" value="${esc(p.businessName)}" placeholder="e.g. Dennis Solar Solutions">
+        <label class="field-label">Phone</label>
+        <input id="p-phone" value="${esc(p.phone)}" placeholder="07XX XXX XXX">
+        <label class="field-label">Email (optional)</label>
+        <input id="p-email" value="${esc(p.email)}" placeholder="you@example.com">
+        <label class="field-label">Location</label>
+        <input id="p-location" value="${esc(p.location)}" placeholder="e.g. Mitunguu, Meru">
+        <div class="note">This appears on every quotation you generate — set it once.</div>
+        <button class="submit-btn" id="confirm-profile" style="width:100%;margin-top:10px;">Save</button>
       </div>
     </div>`;
-  }).join("");
-  contentEl.innerHTML = `<div class="ribbon"><div class="line"></div><span>Upcoming &amp; Past Events</span><div class="line"></div></div>${body}`;
+  document.getElementById("backdrop").addEventListener("click", closeModal);
+  document.getElementById("confirm-profile").addEventListener("click", () => {
+    saveProfile({
+      businessName: document.getElementById("p-name").value.trim(),
+      phone: document.getElementById("p-phone").value.trim(),
+      email: document.getElementById("p-email").value.trim(),
+      location: document.getElementById("p-location").value.trim(),
+    });
+    closeModal();
+  });
 }
 
-function renderMembers(){
-  const { members } = state.data;
-  const skip = spinnerOrEmpty(state.loading.members, members, "No members registered yet. Add the first sign-up.");
-  let body = skip !== null ? skip : members.map(m => `
-    <div class="member-row">
-      <div class="member-left">
-        <div class="avatar">${esc((m.name || "?").charAt(0).toUpperCase())}</div>
-        <div>
-          <div class="member-name">${esc(m.name)}</div>
-          <div class="member-role">${esc(m.role || "Member")}${m.contact ? " · " + esc(m.contact) : ""}</div>
+function generateQuotePDF(){
+  if (!window.jspdf) { alert("PDF library didn't load — check your internet connection and try again."); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const profile = loadProfile();
+  const t = quoteTotals();
+  const dateStr = new Date().toLocaleDateString();
+  let y = 20;
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(18);
+  doc.text(profile.businessName || "Solar Quotation", 14, y); y += 7;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  if (profile.phone) { doc.text(`Tel: ${profile.phone}`, 14, y); y += 5; }
+  if (profile.email) { doc.text(`Email: ${profile.email}`, 14, y); y += 5; }
+  if (profile.location) { doc.text(profile.location, 14, y); y += 5; }
+
+  y += 4;
+  doc.setDrawColor(200); doc.line(14, y, 196, y); y += 8;
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text("QUOTATION", 14, y); y += 7;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  doc.text(`Date: ${dateStr}`, 14, y); y += 6;
+  doc.text(`Customer: ${state.quote.customerName || "-"}`, 14, y); y += 6;
+  if (state.quote.customerLocation) { doc.text(`Site: ${state.quote.customerLocation}`, 14, y); y += 6; }
+  if (state.quote.customerPhone) { doc.text(`Phone: ${state.quote.customerPhone}`, 14, y); y += 6; }
+
+  y += 4;
+  doc.setFont("helvetica","bold");
+  doc.text("Description", 14, y); doc.text("Qty", 130, y); doc.text("Unit (KES)", 150, y); doc.text("Total (KES)", 178, y);
+  y += 2; doc.setDrawColor(200); doc.line(14, y, 196, y); y += 6;
+  doc.setFont("helvetica","normal");
+
+  state.quote.lineItems.forEach(li => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.text(String(li.desc || "-").slice(0,45), 14, y);
+    doc.text(String(li.qty), 130, y);
+    doc.text(fmt(li.unitPrice), 150, y);
+    doc.text(fmt(li.qty * li.unitPrice), 178, y);
+    y += 7;
+  });
+
+  y += 2; doc.line(130, y, 196, y); y += 7;
+  doc.text("Equipment subtotal", 130, y); doc.text(fmt(t.itemsSubtotal), 178, y); y += 7;
+  doc.text("Labour / installation", 130, y); doc.text(fmt(state.quote.labourCost || 0), 178, y); y += 7;
+  if (state.quote.discount > 0) { doc.text("Discount", 130, y); doc.text("-" + fmt(state.quote.discount), 178, y); y += 7; }
+  if (state.quote.vatEnabled) { doc.text("VAT (16%)", 130, y); doc.text(fmt(t.vatAmount), 178, y); y += 7; }
+  y += 2; doc.setDrawColor(0); doc.line(130, y, 196, y); y += 7;
+  doc.setFont("helvetica","bold"); doc.setFontSize(12);
+  doc.text("GRAND TOTAL", 130, y); doc.text(`KES ${fmt(t.grandTotal)}`, 178, y); y += 14;
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(120);
+  doc.text("Generated with JuaSize. Figures are engineering estimates — confirm final pricing with supplier quotes.", 14, y);
+
+  const safeName = (state.quote.customerName || "quotation").replace(/[^a-z0-9]/gi, "_");
+  doc.save(`Quote-${safeName}-${dateStr.replace(/\//g,"-")}.pdf`);
+}
+
+function shareQuoteText(){
+  const profile = loadProfile();
+  const t = quoteTotals();
+  const dateStr = new Date().toLocaleDateString();
+  let text = `SOLAR QUOTATION\n${profile.businessName || ""}${profile.phone ? " · " + profile.phone : ""}\nDate: ${dateStr}\n\n`;
+  text += `Customer: ${state.quote.customerName || "-"}\n`;
+  if (state.quote.customerLocation) text += `Site: ${state.quote.customerLocation}\n`;
+  text += `\nEQUIPMENT\n`;
+  state.quote.lineItems.forEach(li => {
+    text += `${li.desc || "-"} x${li.qty} @ KES ${fmt(li.unitPrice)} = KES ${fmt(li.qty*li.unitPrice)}\n`;
+  });
+  text += `\nEquipment subtotal: KES ${fmt(t.itemsSubtotal)}\n`;
+  text += `Labour/installation: KES ${fmt(state.quote.labourCost || 0)}\n`;
+  if (state.quote.discount > 0) text += `Discount: -KES ${fmt(state.quote.discount)}\n`;
+  if (state.quote.vatEnabled) text += `VAT (16%): KES ${fmt(t.vatAmount)}\n`;
+  text += `\nGRAND TOTAL: KES ${fmt(t.grandTotal)}\n\nGenerated with JuaSize`;
+
+  (async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: "Solar Quotation", text }); return; } catch(e){ /* cancelled */ }
+    }
+    try { await navigator.clipboard.writeText(text); alert("Quotation copied — paste it into WhatsApp."); }
+    catch(e){ alert("Sharing isn't supported here — copy the quotation manually."); }
+  })();
+}
+
+/* ============================= RENDER: PROJECTS TAB ============================= */
+function renderProjects(){
+  const el = document.getElementById("content");
+  const projects = loadProjects();
+  if (projects.length === 0) {
+    el.innerHTML = `<div class="ribbon"><div class="line"></div><span>Saved Projects</span><div class="line"></div></div><div class="empty">No saved projects yet. Build a calculation and tap Save.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="ribbon"><div class="line"></div><span>Saved Projects (${projects.length})</span><div class="line"></div></div><div id="proj-list"></div>`;
+  const list = document.getElementById("proj-list");
+  projects.slice().reverse().forEach(p => {
+    const item = document.createElement("div");
+    item.className = "proj-list-item";
+    const date = new Date(p.updatedAt || p.createdAt);
+    item.innerHTML = `
+      <div>
+        <div class="pname">${esc(p.name)}</div>
+        <div class="pmeta">${date.toLocaleDateString()} · ${p.appliances.length} appliances</div>
+      </div>
+      <button class="icon-btn" data-del>🗑</button>
+    `;
+    item.addEventListener("click", (e) => {
+      if (e.target.closest("[data-del]")) return;
+      state.currentProjectId = p.id;
+      state.currentProjectName = p.name;
+      state.appliances = JSON.parse(JSON.stringify(p.appliances));
+      state.system = JSON.parse(JSON.stringify(p.system));
+      state.cost = JSON.parse(JSON.stringify(p.cost));
+      state.quote = p.quote ? JSON.parse(JSON.stringify(p.quote)) : defaultQuote();
+      state.tab = "calc";
+      renderAll();
+    });
+    item.querySelector("[data-del]").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!confirm(`Delete "${p.name}"?`)) return;
+      saveProjects(loadProjects().filter(x => x.id !== p.id));
+      renderProjects();
+    });
+    list.appendChild(item);
+  });
+}
+
+/* ============================= MODALS ============================= */
+function closeModal(){ document.getElementById("modal-root").innerHTML = ""; }
+
+function openSaveModal(){
+  const root = document.getElementById("modal-root");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="backdrop">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head"><span>Save project</span><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <label class="field-label">Project name</label>
+        <input id="save-name" value="${esc(state.currentProjectName === 'Untitled project' ? '' : state.currentProjectName)}" placeholder="e.g. Mama Jane's house">
+        <button class="submit-btn" id="confirm-save" style="width:100%">Save</button>
+      </div>
+    </div>`;
+  document.getElementById("backdrop").addEventListener("click", closeModal);
+  document.getElementById("confirm-save").addEventListener("click", () => {
+    const name = document.getElementById("save-name").value.trim() || "Untitled project";
+    const projects = loadProjects();
+    const now = Date.now();
+    if (state.currentProjectId) {
+      const idx = projects.findIndex(p => p.id === state.currentProjectId);
+      const record = { id: state.currentProjectId, name, appliances: state.appliances, system: state.system, cost: state.cost, quote: state.quote, createdAt: idx >= 0 ? projects[idx].createdAt : now, updatedAt: now };
+      if (idx >= 0) projects[idx] = record; else projects.push(record);
+    } else {
+      const id = uid();
+      state.currentProjectId = id;
+      projects.push({ id, name, appliances: state.appliances, system: state.system, cost: state.cost, quote: state.quote, createdAt: now, updatedAt: now });
+    }
+    state.currentProjectName = name;
+    saveProjects(projects);
+    closeModal();
+    renderCalc();
+  });
+}
+
+function buildReportText(r){
+  const s = state.system;
+  return `JUASIZE — SOLAR PV SIZING REPORT
+Project: ${state.currentProjectName}
+Date: ${new Date().toLocaleDateString()}
+
+LOAD SUMMARY
+Daily energy need: ${fmt(r.dailyWh)} Wh
+Connected load: ${fmt(r.applianceTotalWatts)} W
+
+SYSTEM SIZING
+PV Array: ${fmt(r.pvArrayWp)} Wp  (${r.panelCount} × ${s.panelWatt}W panels)
+Battery Bank: ${fmt(r.bankAh)} Ah @ ${s.systemVoltage}V  (${r.totalBatteries} × ${s.batteryAh}Ah batteries, ${r.seriesCount}S${r.stringsNeeded}P)
+Inverter: ${fmt(r.inverterVA)} VA
+Charge Controller: ${fmt(r.ccAmps)} A (${s.controllerType.toUpperCase()})
+
+SAFETY CHECKS
+Voltage match: ${r.voltageMatchOk ? "PASS" : "WARNING"}
+Backup time: ${r.backupDaysAchieved.toFixed(1)} days (target ${s.autonomyDays}) — ${r.backupOk ? "PASS" : "WARNING"}
+Starting surge: ${r.surgeOk ? "PASS" : "WARNING — recommend " + fmt(r.recommendedSurgeVA) + "VA inverter"}
+
+ESTIMATED COST (KES)
+Panels: ${fmt(r.panelsCost)}
+Batteries: ${fmt(r.batteriesCost)}
+Inverter: ${fmt(state.cost.inverterPrice)}
+Charge controller: ${fmt(state.cost.controllerPrice)}
+Installation/misc (${state.cost.installPct}%): ${fmt(r.installCost)}
+TOTAL: KES ${fmt(r.totalCost)}
+
+Generated with JuaSize`;
+}
+
+function openReportModal(r){
+  const text = buildReportText(r);
+  const root = document.getElementById("modal-root");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="backdrop">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head"><span>Shareable Report</span><button class="icon-btn" onclick="closeModal()">✕</button></div>
+        <div class="report-text">${esc(text)}</div>
+        <div class="modal-actions">
+          <button class="ghost-btn" id="btn-copy">Copy</button>
+          <button class="submit-btn" id="btn-share">Share</button>
         </div>
       </div>
-      <button class="icon-btn" onclick="removeDoc('members','${m.id}')">✕</button>
-    </div>`).join("");
-  contentEl.innerHTML = `<div class="ribbon"><div class="line"></div><span>Members (${members.length}/50)</span><div class="line"></div></div>${body}`;
+    </div>`;
+  document.getElementById("backdrop").addEventListener("click", closeModal);
+  document.getElementById("btn-copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text); document.getElementById("btn-copy").textContent = "Copied!"; }
+    catch(e){ alert("Couldn't copy — long-press the text above to copy manually."); }
+  });
+  document.getElementById("btn-share").addEventListener("click", async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: "JuaSize Report", text }); }
+      catch(e){ /* user cancelled */ }
+    } else {
+      try { await navigator.clipboard.writeText(text); alert("Report copied — paste it into WhatsApp or email."); }
+      catch(e){ alert("Sharing isn't supported on this browser — copy the text manually."); }
+    }
+  });
 }
 
-function render(){
+/* ============================= HELPERS ============================= */
+function esc(str){ const d = document.createElement("div"); d.innerText = str == null ? "" : str; return d.innerHTML; }
+
+function renderAll(){
   document.querySelectorAll("nav.tabbar button").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
-  if (state.tab === "home") renderHome();
-  else if (state.tab === "projects") renderProjects();
-  else if (state.tab === "events") renderEvents();
-  else if (state.tab === "members") renderMembers();
+  if (state.tab === "calc") renderCalc();
+  else if (state.tab === "quote") renderQuote();
+  else renderProjects();
 }
 
 document.getElementById("tabbar").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");
   if (!btn) return;
   state.tab = btn.dataset.tab;
-  render();
+  renderAll();
 });
 
-/* ---------------------- modals / forms ---------------------- */
-function closeModal(){ modalRoot.innerHTML = ""; }
+renderAll();
 
-function openModal(type){
-  const forms = {
-    announcement: {
-      title: "Post an announcement",
-      fields: `
-        <label class="field-label">Title</label><input id="f-title" required>
-        <label class="field-label">Message</label><textarea id="f-body" required></textarea>
-        <label class="field-label">Posted by</label><input id="f-author" placeholder="Your name">
-      `,
-      submitLabel: "Post announcement",
-      onSubmit: () => {
-        const title = document.getElementById("f-title").value.trim();
-        const body = document.getElementById("f-body").value.trim();
-        const author = document.getElementById("f-author").value.trim();
-        if (!title || !body) return;
-        addDoc("announcements", { title, body, author });
-        closeModal();
-      }
-    },
-    project: {
-      title: "Add a project",
-      fields: `
-        <label class="field-label">Project title</label><input id="f-title" required>
-        <label class="field-label">Inventor(s)</label><input id="f-inventor" required>
-        <label class="field-label">Category</label><input id="f-category" placeholder="e.g. Robotics, Agri-tech">
-        <label class="field-label">Description</label><textarea id="f-desc"></textarea>
-      `,
-      submitLabel: "Add project",
-      onSubmit: () => {
-        const title = document.getElementById("f-title").value.trim();
-        const inventor = document.getElementById("f-inventor").value.trim();
-        const category = document.getElementById("f-category").value.trim();
-        const description = document.getElementById("f-desc").value.trim();
-        if (!title || !inventor) return;
-        addDoc("projects", { title, inventor, category, description });
-        closeModal();
-      }
-    },
-    event: {
-      title: "Add an event",
-      fields: `
-        <label class="field-label">Event title</label><input id="f-title" required>
-        <label class="field-label">Date</label><input id="f-date" type="date" required>
-        <label class="field-label">Location</label><input id="f-location" placeholder="e.g. Engineering Hall">
-        <label class="field-label">Description</label><textarea id="f-desc"></textarea>
-      `,
-      submitLabel: "Add event",
-      onSubmit: () => {
-        const title = document.getElementById("f-title").value.trim();
-        const date = document.getElementById("f-date").value;
-        const location = document.getElementById("f-location").value.trim();
-        const description = document.getElementById("f-desc").value.trim();
-        if (!title || !date) return;
-        addDoc("events", { title, date, location, description });
-        closeModal();
-      }
-    },
-    member: {
-      title: "Register a member",
-      fields: `
-        <label class="field-label">Full name</label><input id="f-name" required>
-        <label class="field-label">Role</label><input id="f-role" placeholder="e.g. Member, Secretary">
-        <label class="field-label">Contact</label><input id="f-contact" placeholder="Phone or email">
-      `,
-      submitLabel: state.data.members.length >= 50 ? "Directory full (50/50)" : "Register member",
-      onSubmit: () => {
-        if (state.data.members.length >= 50) return;
-        const name = document.getElementById("f-name").value.trim();
-        const role = document.getElementById("f-role").value.trim();
-        const contact = document.getElementById("f-contact").value.trim();
-        if (!name) return;
-        addDoc("members", { name, role, contact });
-        closeModal();
-      }
-    }
-  };
-
-  const f = forms[type];
-  modalRoot.innerHTML = `
-    <div class="modal-backdrop" id="backdrop">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-head"><span>${esc(f.title)}</span><button class="icon-btn" onclick="closeModal()">✕</button></div>
-        <form id="modal-form">
-          ${f.fields}
-          <button type="submit" class="submit-btn">${esc(f.submitLabel)}</button>
-        </form>
-      </div>
-    </div>`;
-  document.getElementById("backdrop").addEventListener("click", closeModal);
-  document.getElementById("modal-form").addEventListener("submit", (e) => { e.preventDefault(); f.onSubmit(); });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
 }
-
-document.getElementById("fab").addEventListener("click", () => {
-  const map = { home: "announcement", projects: "project", events: "event", members: "member" };
-  openModal(map[state.tab]);
-});
-
-render();
 </script>
 </body>
 </html>
